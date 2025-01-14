@@ -5,6 +5,7 @@ import subprocess
 import tempfile
 import sys
 import os
+from git_factory import open_github_new_project, push_template_to_github
 
 def main():
     # --- Session State Setup ---
@@ -159,6 +160,12 @@ def main():
         if st.button("Create Github Repository"):
             # TODO: Implement the GitHub repository creation functionality
             st.info("GitHub Repository creation is not yet implemented.")
+            
+            open_github_new_project()
+            user_repo_name = st.text_input("Enter the repository name")
+            if user_repo_name:
+                push_template_to_github(user_repo_name, st.session_state.code)
+
             st.session_state.edit_mode = False
 
         # Display any run output
