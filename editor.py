@@ -156,17 +156,24 @@ def main():
             else:
                 st.error("No code available to run.")
 
-        # Create Github Repository Button (Placeholder)
+        # Create Github Repository Button
         if st.button("Create Github Repository"):
-            # TODO: Implement the GitHub repository creation functionality
-            st.info("GitHub Repository creation is not yet implemented.")
-            
             open_github_new_project()
-            user_repo_name = st.text_input("Enter the repository name")
-            if user_repo_name:
-                push_template_to_github(user_repo_name, st.session_state.code)
-
             st.session_state.edit_mode = False
+
+        # GitHub Repository URL Input
+        repo_url = st.text_input("Enter the GitHub repository URL")
+
+        # Upload Button
+        if st.button("Upload"):
+            if repo_url and edited_code:
+                try:
+                    push_template_to_github(repo_url, edited_code)
+                    st.success("Code pushed to GitHub successfully.")
+                except Exception as e:
+                    st.error(f"Failed to push code to GitHub: {str(e)}")
+            else:
+                st.error("Please enter a valid GitHub URL and ensure code is available.")
 
         # Display any run output
         if st.session_state.run_output:
