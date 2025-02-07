@@ -1,22 +1,31 @@
 import streamlit as st
 import requests
 
-# GitHub templates with their respective GitHub URLs
-template_urls = {
-    # Using a repository URL (ends with .git) for the AWS Lambda Auth template
-    "AWS Lambda Auth - Streamlit": "https://github.com/SourceBox-LLC/streamlit-login-template.git",
-    # For demonstration, this one remains as a file URL (update with the actual URL if needed)
-    "Streamlit Chatbot": "https://github.com/your-org/streamlit-chatbot-template/blob/master/main.py"
+# GitHub templates along with their corresponding URLs and images.
+template_info = {
+    "AWS Lambda Auth (Streamlit + AWS Lambda)": {
+        "url": "https://github.com/SourceBox-LLC/streamlit-login-template.git",
+        "image": "images/streamlit login template.PNG",
+    },
+
+    "Chatbot (LangChain + Anthropic + Streamlit)": {
+        "url": "https://github.com/SourceBox-LLC/streamlit-basic-langchain-chatbot.git",
+        "image": "images/streamlit chatbot anthropic template.png",
+    },
+
+    "RAG Chatbot (LangChain + Anthropic + Streamlit)": {
+        "url": "https://github.com/SourceBox-LLC/streamlit-basic-RAG-langchain-chatbot.git",
+        "image": "images/streamlit rag chatbot template.png"
+    },
+    "Image Generator Multi-Modal (Hugging Face + Streamlit)": {
+        "url": "https://github.com/SourceBox-LLC/image-generator-multi-select-template.git",
+        "image": "images/image chatbot.png"
+    }
 }
 
-st.write("Displaying templates here")
 
-# Define options for the selectbox
-options = ["", "AWS Lambda Auth - Streamlit", "Generate New Template"]
 
-# Create a selectbox in Streamlit
-selected_option = st.selectbox("Choose an option:", options)
-st.write(f"You selected: {selected_option}")
+st.write("Displaying templates here:")
 
 def convert_to_raw(url):
     """
@@ -30,11 +39,40 @@ def convert_to_raw(url):
         return url.replace("github.com", "raw.githubusercontent.com").replace("/blob", "")
     return url
 
-def process_repo_template(url):
+# -----------------------------------------------------------------------------
+# Modal Dialog Function using st.dialog with width set to "large"
+# This modal shows the main template file at the top,
+# followed by the rest of the files in expandable accordions.
+# A "Select Template" button is added at the bottom to save everything
+# to st.session_state.
+# -----------------------------------------------------------------------------
+@st.dialog("Template Preview", width="large")  # Set width to 'large' for a wider modal
+def show_template_modal(main_file, main_file_content, other_files):
+    st.markdown(f"## Main Template File: `{main_file}`")
+    st.code(main_file_content, language="python")
+    if other_files:
+        st.markdown("## Other Files")
+        for file_path, content in other_files.items():
+            with st.expander(file_path):
+                st.code(content, language="python")
+                
+    # Button to select the template and store its data to session
+    if st.button("Select Template"):
+        st.session_state["selected_template"] = {
+            "main_file": main_file,
+            "main_file_content": main_file_content,
+            "other_files": other_files,
+        }
+        st.success("Template saved to session!")
+
+def open_repo_template_modal(url):
     """
-    Process a repository URL (ending in .git) by fetching its tree using the GitHub API.
-    This function determines the repository's default branch before querying the tree, 
-    then lets the user select a file to view its contents.
+    Process a repository URL (ending in .git) by:
+      - Determining the default branch via the GitHub API.
+      - Fetching the repository tree.
+      - Selecting a main file (preferring app.py or main.py).
+      - Fetching the content of the main file and all other files.
+      - Calling the modal dialog to show these files.
     """
     # Remove trailing '.git' if present and parse repository details
     base_url = url[:-4] if url.endswith('.git') else url
@@ -44,7 +82,7 @@ def process_repo_template(url):
         return
 
     owner = parts[3]
-    repo  = parts[4]
+    repo = parts[4]
 
     # Get repository info to determine the default branch
     repo_info_url = f"https://api.github.com/repos/{owner}/{repo}"
@@ -62,56 +100,92 @@ def process_repo_template(url):
     # Build the GitHub API URL for the tree (recursive)
     tree_api_url = f"https://api.github.com/repos/{owner}/{repo}/git/trees/{branch}?recursive=1"
     st.write(f"Fetching repository tree from: {tree_api_url}")
-    
     try:
-        response = requests.get(tree_api_url)
-        response.raise_for_status()
-        tree_data = response.json()
+        tree_response = requests.get(tree_api_url)
+        tree_response.raise_for_status()
+        tree_data = tree_response.json()
         
         # Get list of files (filtering items with type 'blob')
         files = [item['path'] for item in tree_data.get('tree', []) if item.get("type") == "blob"]
         if not files:
             st.warning("No files found in the repository.")
             return
-        
-        # Let the user select a file to view with an empty entry at the top
-        selected_file = st.selectbox("Select a file to view", [""] + sorted(files))
-        if selected_file:
-            # Create a raw URL for the file using the determined default branch
-            raw_url = f"https://raw.githubusercontent.com/{owner}/{repo}/{branch}/{selected_file}"
-            st.write(f"Fetching file from: {raw_url}")
-            
-            file_response = requests.get(raw_url)
-            file_response.raise_for_status()
-            
-            file_content = file_response.text
-            # Display the file content; adjust the language based on the file extension if needed.
-            st.code(file_content, language="python")
     except requests.exceptions.RequestException as e:
-        st.error(f"Error fetching repository data: {e}")
+        st.error(f"Error fetching repository tree: {e}")
+        return
 
-# Process the selected option
-if selected_option == "None":
-    st.info("No template selected.")
-elif selected_option == "Generate New Template":
-    st.info("Generate New Template functionality is not implemented yet.")
-elif selected_option in template_urls:
-    # Get the corresponding URL for the selected template
-    url = template_urls[selected_option]
-    # If the URL ends with '.git', treat it as an entire repository
-    if url.endswith('.git'):
-        process_repo_template(url)
+    # Determine the main file:
+    main_file = None
+    if "app.py" in files:
+        main_file = "app.py"
+    elif "main.py" in files:
+        main_file = "main.py"
     else:
-        # Otherwise, assume it is a GitHub file URL and convert it to raw
-        raw_url = convert_to_raw(url)
-        st.write(f"Fetching the template from: {raw_url}")
-        
+        # If none match, choose the first file that ends with .py, otherwise the first file overall.
+        py_files = [f for f in files if f.endswith('.py')]
+        if py_files:
+            main_file = sorted(py_files)[0]
+        else:
+            main_file = sorted(files)[0]
+
+    # Fetch content for the main file
+    raw_main_url = f"https://raw.githubusercontent.com/{owner}/{repo}/{branch}/{main_file}"
+    st.write(f"Fetching main file from: {raw_main_url}")
+    try:
+        main_file_response = requests.get(raw_main_url)
+        main_file_response.raise_for_status()
+        main_file_content = main_file_response.text
+    except requests.exceptions.RequestException as e:
+        st.error(f"Error fetching main file: {e}")
+        return
+
+    # Fetch content for the rest of the files (exclude the main file)
+    other_files = {}
+    for file in files:
+        if file == main_file:
+            continue
+        raw_url = f"https://raw.githubusercontent.com/{owner}/{repo}/{branch}/{file}"
         try:
             response = requests.get(raw_url)
-            response.raise_for_status()  # Raises an HTTPError if the HTTP request returned an error
-            template_content = response.text
-            st.code(template_content, language="python")
+            response.raise_for_status()
+            other_files[file] = response.text
         except requests.exceptions.RequestException as e:
-            st.error(f"Error downloading the template: {e}")
-else:
-    st.warning("Unknown selection.")
+            other_files[file] = f"Error fetching file: {e}"
+
+    # Show the modal dialog with the template details
+    show_template_modal(main_file, main_file_content, other_files)
+
+# -----------------------------------------------------------------------------
+# Display available templates as a stacked list; each template is its own form.
+# -----------------------------------------------------------------------------
+st.markdown("## Available Templates")
+
+for idx, (template_name, data) in enumerate(template_info.items()):
+    url = data["url"]
+    image = data["image"]
+    
+    # Each template is rendered in its own form ("card") with a unique key.
+    with st.form(key=f"template_form_{idx}"):
+        st.markdown(f"### {template_name}")
+        st.image(image, caption=template_name)
+        st.write("This template is perfect for your project. Click below to select it!")
+        
+        # The submit button inside the form
+        submitted = st.form_submit_button(f"Select {template_name}")
+        
+        if submitted:
+            st.success(f"You selected the {template_name} template!")
+            
+            # Process based on the URL type:
+            if url.endswith('.git'):
+                open_repo_template_modal(url)
+            else:
+                raw_url = convert_to_raw(url)
+                st.write(f"Fetching the template from: {raw_url}")
+                try:
+                    response = requests.get(raw_url)
+                    response.raise_for_status()
+                    template_content = response.text
+                    st.code(template_content, language="python")
+                except requests.exceptions.RequestException as e:
+                    st.error(f"Error downloading the template: {e}")
