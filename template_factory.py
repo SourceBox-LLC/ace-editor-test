@@ -3,25 +3,32 @@ import requests
 
 # GitHub templates along with their corresponding URLs and images.
 template_info = {
-    "AWS Lambda Auth (Streamlit + AWS Lambda)": {
+    "Simple Streamlit Authentication (Streamlit + Python)": {
+        "url": "https://github.com/SourceBox-LLC/simple-streamlit-authentication.git",
+        "image": "images/streamlit login template.PNG"
+    },
+
+    "AWS Lambda Auth (Streamlit + AWS Lambda + Python)": {
         "url": "https://github.com/SourceBox-LLC/streamlit-login-template.git",
         "image": "images/streamlit login template.PNG",
     },
 
-    "Chatbot (LangChain + Anthropic + Streamlit)": {
+    "Chatbot (LangChain + Anthropic + Streamlit + Python)": {
         "url": "https://github.com/SourceBox-LLC/streamlit-basic-langchain-chatbot.git",
         "image": "images/streamlit chatbot anthropic template.png",
     },
 
-    "RAG Chatbot (LangChain + Anthropic + Streamlit)": {
+    "RAG Chatbot (LangChain + Anthropic + Streamlit + Python)": {
         "url": "https://github.com/SourceBox-LLC/streamlit-basic-RAG-langchain-chatbot.git",
         "image": "images/streamlit rag chatbot template.png"
     },
-    "Image Generator Multi-Modal (Hugging Face + Streamlit)": {
+
+    "Image Generator Multi-Modal (Hugging Face + Streamlit + Python)": {
         "url": "https://github.com/SourceBox-LLC/image-generator-multi-select-template.git",
         "image": "images/image chatbot.png"
     }
 }
+
 
 def convert_to_raw(url):
     """
@@ -151,6 +158,31 @@ def open_repo_template_modal(url):
     # Show the modal dialog with the template details
     show_template_modal(main_file, main_file_content, other_files)
 
+def open_generated_template_modal():
+    """
+    Opens the modal dialog for a generated new template.
+    Expects st.session_state["generated_template"] to contain either:
+     - a dictionary with keys "main_file", "main_file_content", and "other_files", or
+     - a plain string representing a single-file template.
+    """
+    generated = st.session_state.get("generated_template")
+    if not generated:
+        st.error("No generated template available.")
+        return
+    
+    # If generated is a string, assume that it's the main file content and wrap it in a dict.
+    if isinstance(generated, str):
+        generated = {
+            "main_file": "main.py",
+            "main_file_content": generated,
+            "other_files": {}
+        }
+    
+    main_file = generated.get("main_file")
+    main_file_content = generated.get("main_file_content")
+    other_files = generated.get("other_files", {})
+    show_template_modal(main_file, main_file_content, other_files)
+
 def display_templates_component():
     """
     Renders the templates component.
@@ -187,6 +219,12 @@ def display_templates_component():
                         st.code(template_content, language="python")
                     except requests.exceptions.RequestException as e:
                         st.error(f"Error downloading the template: {e}")
+    
+    # NEW: If a generated new template exists, add a preview button.
+    if st.session_state.get("generated_template"):
+        st.markdown("## Generated New Template")
+        if st.button("Preview Generated Template"):
+            open_generated_template_modal()
 
 # Optional: For testing this module independently
 if __name__ == "__main__":
