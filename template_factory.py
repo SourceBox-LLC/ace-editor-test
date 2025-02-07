@@ -23,10 +23,6 @@ template_info = {
     }
 }
 
-
-
-st.write("Displaying templates here:")
-
 def convert_to_raw(url):
     """
     Convert a GitHub URL to its raw file URL.
@@ -46,7 +42,7 @@ def convert_to_raw(url):
 # A "Select Template" button is added at the bottom to save everything
 # to st.session_state.
 # -----------------------------------------------------------------------------
-@st.dialog("Template Preview", width="large")  # Set width to 'large' for a wider modal
+@st.dialog("Template Preview", width="large")
 def show_template_modal(main_file, main_file_content, other_files):
     st.markdown(f"## Main Template File: `{main_file}`")
     st.code(main_file_content, language="python")
@@ -155,37 +151,43 @@ def open_repo_template_modal(url):
     # Show the modal dialog with the template details
     show_template_modal(main_file, main_file_content, other_files)
 
-# -----------------------------------------------------------------------------
-# Display available templates as a stacked list; each template is its own form.
-# -----------------------------------------------------------------------------
-st.markdown("## Available Templates")
-
-for idx, (template_name, data) in enumerate(template_info.items()):
-    url = data["url"]
-    image = data["image"]
+def display_templates_component():
+    """
+    Renders the templates component.
+    Use this function in your app.py to display the templates.
+    """
+    st.markdown("## Available Templates")
     
-    # Each template is rendered in its own form ("card") with a unique key.
-    with st.form(key=f"template_form_{idx}"):
-        st.markdown(f"### {template_name}")
-        st.image(image, caption=template_name)
-        st.write("This template is perfect for your project. Click below to select it!")
-        
-        # The submit button inside the form
-        submitted = st.form_submit_button(f"Select {template_name}")
-        
-        if submitted:
-            st.success(f"You selected the {template_name} template!")
-            
-            # Process based on the URL type:
-            if url.endswith('.git'):
-                open_repo_template_modal(url)
-            else:
-                raw_url = convert_to_raw(url)
-                st.write(f"Fetching the template from: {raw_url}")
-                try:
-                    response = requests.get(raw_url)
-                    response.raise_for_status()
-                    template_content = response.text
-                    st.code(template_content, language="python")
-                except requests.exceptions.RequestException as e:
-                    st.error(f"Error downloading the template: {e}")
+    # Create a stacked list; each template is rendered as its own form ("card")
+    for idx, (template_name, data) in enumerate(template_info.items()):
+        url = data["url"]
+        image = data["image"]
+    
+        with st.form(key=f"template_form_{idx}"):
+            st.markdown(f"### {template_name}")
+            st.image(image, caption=template_name)
+            st.write("This template is perfect for your project. Click below to select it!")
+    
+            # The submit button inside the form
+            submitted = st.form_submit_button(f"Select {template_name}")
+    
+            if submitted:
+                st.success(f"You selected the {template_name} template!")
+    
+                # Process based on the URL type:
+                if url.endswith('.git'):
+                    open_repo_template_modal(url)
+                else:
+                    raw_url = convert_to_raw(url)
+                    st.write(f"Fetching the template from: {raw_url}")
+                    try:
+                        response = requests.get(raw_url)
+                        response.raise_for_status()
+                        template_content = response.text
+                        st.code(template_content, language="python")
+                    except requests.exceptions.RequestException as e:
+                        st.error(f"Error downloading the template: {e}")
+
+# Optional: For testing this module independently
+if __name__ == "__main__":
+    display_templates_component()
