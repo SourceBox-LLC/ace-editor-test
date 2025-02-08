@@ -67,6 +67,7 @@ def show_template_modal(main_file, main_file_content, other_files):
             "other_files": other_files,
         }
         st.success("Template saved to session!")
+        st.rerun()
 
 def open_repo_template_modal(url):
     """
