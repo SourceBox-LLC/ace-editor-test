@@ -10,6 +10,31 @@ if "generated_template" not in st.session_state:
     st.session_state["generated_template"] = None
 
 # -------------------------------------------------------------------
+# Check if we are in "edit mode". If so, show the Ace editor.
+if st.session_state.get("edit_mode"):
+    from ace_editor import ace_editor
+    # Retrieve the current template code from the session.
+    template_code = st.session_state.get("selected_template", {}).get("main_file_content", "")
+    # Run the Ace editor and capture the (possibly edited) content.
+    edited_code = ace_editor(template_code)
+    
+    # Create two columns for the Save and Back buttons.
+    col1, col2 = st.columns(2)
+    
+    if col1.button("Save"):
+        # Save the updated code into st.session_state.
+        st.session_state["selected_template"]["main_file_content"] = edited_code
+        st.success("Changes saved!")
+        st.session_state["edit_mode"] = False
+        st.rerun()
+    
+    if col2.button("Back to Template Details"):
+        st.session_state["edit_mode"] = False
+        st.rerun()
+    
+    st.stop()
+
+# -------------------------------------------------------------------
 # If a template has already been selected, show its details automatically.
 if st.session_state["selected_template"] is not None:
     selected_template = st.session_state["selected_template"]
@@ -19,7 +44,7 @@ if st.session_state["selected_template"] is not None:
     # (Optional) Insert a template image here if available:
     st.write("Insert template image here!")
     
-    # Display the main file (the main app file) normally.
+    # Display the main file normally.
     st.subheader(f"Main File: {selected_template['main_file']}")
     st.code(selected_template["main_file_content"], language="python")
     
@@ -45,14 +70,15 @@ if st.session_state["selected_template"] is not None:
         st.subheader("Use Case")
         st.write("Explanation of use cases")
     
-    #edit template via ace editor
+    # Button to switch to edit mode with the current template code loaded in the Ace editor.
     if st.button("Edit Template"):
-        pass
+        st.session_state["edit_mode"] = True
+        st.rerun()
 
-    # Option to clear the selection and return to the selection UI.
+    # Button to clear the current template if needed.
     if st.button("Select Another Template"):
         st.session_state["selected_template"] = None
-        st.rerun()  # Force a rerun to show the selection UI.
+        st.rerun()
     
     st.stop()  # Stop further execution so the selection UI is not rendered.
 
@@ -60,6 +86,10 @@ if st.session_state["selected_template"] is not None:
 # Template Selection / Generation UI (shown only if no template is selected)
 st.header("Templates")
 st.subheader("Quickly download templates")
+
+with st.sidebar:
+    st.title("To Be Determined")
+
 
 # Define options for the selectbox.
 options = ["None", "Select Existing Templates", "Generate New Template"]

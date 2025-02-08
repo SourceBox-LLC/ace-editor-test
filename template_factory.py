@@ -26,11 +26,17 @@ template_info = {
     "Image Generator Multi-Modal (Hugging Face + Streamlit + Python)": {
         "url": "https://github.com/SourceBox-LLC/image-generator-multi-select-template.git",
         "image": "images/image chatbot.png"
+    },
+
+    "Ace Editor (Streamlit + Ace Editor + Python)": {
+        "url": "https://github.com/SourceBox-LLC/streamlit-ace-editor.git",
+        "image": "images/ace_editor_img.PNG"
     }
 }
 
 
 def convert_to_raw(url):
+
     """
     Convert a GitHub URL to its raw file URL.
     Example:
