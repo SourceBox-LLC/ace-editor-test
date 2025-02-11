@@ -5,32 +5,44 @@ import requests
 template_info = {
     "Simple Streamlit Authentication (Streamlit + Python)": {
         "url": "https://github.com/SourceBox-LLC/simple-streamlit-authentication.git",
-        "image": "images/streamlit login template.PNG"
+        "image": "images/streamlit login template.PNG",
+        "details": "",
+        "stack": ""
     },
 
     "AWS Lambda Auth (Streamlit + AWS Lambda + Python)": {
         "url": "https://github.com/SourceBox-LLC/streamlit-login-template.git",
         "image": "images/streamlit login template.PNG",
+        "details": "",
+        "stack": ""
     },
 
     "Chatbot (LangChain + Anthropic + Streamlit + Python)": {
         "url": "https://github.com/SourceBox-LLC/streamlit-basic-langchain-chatbot.git",
         "image": "images/streamlit chatbot anthropic template.png",
+        "details": "",
+        "stack": ""
     },
 
     "RAG Chatbot (LangChain + Anthropic + Streamlit + Python)": {
         "url": "https://github.com/SourceBox-LLC/streamlit-basic-RAG-langchain-chatbot.git",
-        "image": "images/streamlit rag chatbot template.png"
+        "image": "images/streamlit rag chatbot template.png",
+        "details": "",
+        "stack": ""
     },
 
     "Image Generator Multi-Modal (Hugging Face + Streamlit + Python)": {
         "url": "https://github.com/SourceBox-LLC/image-generator-multi-select-template.git",
-        "image": "images/image chatbot.png"
+        "image": "images/image chatbot.png",
+        "details": "",
+        "stack": ""
     },
 
     "Ace Editor (Streamlit + Ace Editor + Python)": {
         "url": "https://github.com/SourceBox-LLC/streamlit-ace-editor.git",
-        "image": "images/ace_editor_img.PNG"
+        "image": "images/ace_editor_img.PNG",
+        "details": "",
+        "stack": ""
     }
 }
 

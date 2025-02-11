@@ -45,7 +45,30 @@ def generate_template(prompt):
 
 
 
+def auto_edit_template(prompt, code):
+    messages = [
+        ("system", """
+         You are a code template editor.
+         Your goal is to edit the CODE provided based on the user PROMPT Your output should be only valid code. 
+         Do not include any other text or comments."""),
+        ("human", f"PROMPT: {prompt}\nCODE: {code}"),
+    ]
+    try:
+        # Invoke the ChatBedrock LLM
+        ai_msg = llm.invoke(messages)
+        # Log raw AI response for debugging
+        logger.info(f"Raw AI response: {ai_msg}")
 
+        # Extract the text content from the returned object.
+        # Adjust the method to match the actual structure of ai_msg.
+        content = ai_msg.content
+        logger.info("Template edited successfully.")
+        return content
+
+    except Exception as e:
+        logger.error(f"Error generating templates: {e}")
+        return None
+    
 
 
 

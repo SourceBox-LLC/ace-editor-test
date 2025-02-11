@@ -1,6 +1,8 @@
 import streamlit as st
 from template_factory import display_templates_component, open_generated_template_modal
 from bedrock import generate_template
+import io
+import zipfile
 
 # -------------------------------------------------------------------
 # Initialize session state keys if they don't exist yet.
@@ -8,6 +10,25 @@ if "selected_template" not in st.session_state:
     st.session_state["selected_template"] = None
 if "generated_template" not in st.session_state:
     st.session_state["generated_template"] = None
+
+# -------------------------------------------------------------------
+def create_template_zip(template):
+    """
+    Given a template dict with keys 'main_file', 'main_file_content', and optionally 'other_files',
+    create an in-memory ZIP file containing all of the template files.
+    """
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+        # Write the main file.
+        main_file_name = template.get("main_file", "template.txt")
+        main_content = template.get("main_file_content", "")
+        zip_file.writestr(main_file_name, main_content)
+        
+        # Write any other files.
+        for file_name, content in template.get("other_files", {}).items():
+            zip_file.writestr(file_name, content)
+    buffer.seek(0)  # Rewind the buffer to the beginning so it can be read.
+    return buffer
 
 # -------------------------------------------------------------------
 # Check if we are in "edit mode". If so, show the Ace editor.
@@ -41,8 +62,15 @@ if st.session_state["selected_template"] is not None:
 
     st.header("Selected Template Details")
     
-    # (Optional) Insert a template image here if available:
-    st.write("Insert template image here!")
+    # Display the template image if available; otherwise, show placeholder text.
+    if "selected_template_image" in st.session_state:
+        st.image(
+            st.session_state["selected_template_image"],
+            caption=st.session_state.get("selected_template_name", "Template Image")
+        )
+    else:
+        st.write("Insert template image here!")
+        st.write(selected_template)
     
     # Display the main file normally.
     st.subheader(f"Main File: {selected_template['main_file']}")
@@ -59,7 +87,6 @@ if st.session_state["selected_template"] is not None:
     # Sidebar information for the selected template.
     with st.sidebar:
         st.header(f"{selected_template.get('main_file', 'Template')} Template")
-        st.subheader("One Sentence Explanation")
         st.markdown("---")
         st.subheader("Details")
         st.write("Longer in-depth explanation")
@@ -67,9 +94,20 @@ if st.session_state["selected_template"] is not None:
         st.subheader("Stack")
         st.write("Stack details list here")
         st.markdown("---")
-        st.subheader("Use Case")
-        st.write("Explanation of use cases")
-    
+        
+        # Create the ZIP archive from the template.
+        template_zip = create_template_zip(selected_template)
+        
+        # Provide a download button.
+        st.download_button(
+            label="Download Template",
+            data=template_zip,
+            file_name="template.zip",
+            mime="application/zip"
+        )
+       
+        st.link_button("Create New Repository", url="https://github.com/new")
+        
     # Button to switch to edit mode with the current template code loaded in the Ace editor.
     if st.button("Edit Template"):
         st.session_state["edit_mode"] = True
@@ -89,7 +127,6 @@ st.subheader("Quickly download templates")
 
 with st.sidebar:
     st.title("To Be Determined")
-
 
 # Define options for the selectbox.
 options = ["None", "Select Existing Templates", "Generate New Template"]
