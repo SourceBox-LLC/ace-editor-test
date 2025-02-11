@@ -44,7 +44,7 @@ def ace_editor(content):
     # ------------------------------
     # Main Content - The Ace Editor
     # ------------------------------
-    st.title("Big Ace Editor")
+    st.title("Template Editor")
     # Use a dynamic key based on the version counter so that when the version increments,
     # the Ace widget is forced to reinitialize with the new content.
     editor_content = st_ace(
@@ -68,7 +68,7 @@ def ace_editor(content):
     # AI Edit Section
     # ------------------------------
     st.subheader("AI Prompt Edit (Optional)")
-    prompt_edit = st.text_area("Enter your AI prompt to edit the code:")
+    prompt_edit = st.text_area("Enter your AI prompt to edit the template automatically:")
 
     if st.button("Submit AI Edit"):
         # Pass both the current prompt and the current editor content to your AI editor function.

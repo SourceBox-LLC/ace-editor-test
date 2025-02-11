@@ -3,52 +3,51 @@ import requests
 
 # GitHub templates along with their corresponding URLs and images.
 template_info = {
-    "Simple Streamlit Authentication (Streamlit + Python)": {
+    "Simple Streamlit Authentication": {
         "url": "https://github.com/SourceBox-LLC/simple-streamlit-authentication.git",
         "image": "images/streamlit login template.PNG",
-        "details": "",
-        "stack": ""
+        "details": "a simple authentication template in Streamlit for logging in, logging out, and registering locally",
+        "stack": "Streamlit, Python"
     },
 
-    "AWS Lambda Auth (Streamlit + AWS Lambda + Python)": {
+    "AWS Lambda Auth": {
         "url": "https://github.com/SourceBox-LLC/streamlit-login-template.git",
         "image": "images/streamlit login template.PNG",
         "details": "",
-        "stack": ""
+        "stack": "Streamlit, AWS Lambda, Python"
     },
 
-    "Chatbot (LangChain + Anthropic + Streamlit + Python)": {
+    "Chatbot": {
         "url": "https://github.com/SourceBox-LLC/streamlit-basic-langchain-chatbot.git",
         "image": "images/streamlit chatbot anthropic template.png",
-        "details": "",
-        "stack": ""
+        "details": "This is a bare bones basic template for a chatbot using Anthropic's claude-3-5-sonnet with Langchain and Streamlit",
+        "stack": "Streamlit, LangChain, Python"
     },
 
-    "RAG Chatbot (LangChain + Anthropic + Streamlit + Python)": {
+    "RAG Chatbot ()": {
         "url": "https://github.com/SourceBox-LLC/streamlit-basic-RAG-langchain-chatbot.git",
         "image": "images/streamlit rag chatbot template.png",
-        "details": "",
-        "stack": ""
+        "details": "This is a bare bones basic template for a RAG chatbot using Anthropic's claude-3-5-sonnet with Langchain and Streamlit",
+        "stack": "LangChain, Anthropic, Streamlit, Python"
     },
 
-    "Image Generator Multi-Modal (Hugging Face + Streamlit + Python)": {
+    "Image Generator Multi-Modal": {
         "url": "https://github.com/SourceBox-LLC/image-generator-multi-select-template.git",
         "image": "images/image chatbot.png",
-        "details": "",
-        "stack": ""
+        "details": "an image generation display using Streamlit and Huggingface to host a variety of image generation models",
+        "stack": "Hugging Face, Streamlit, Python"
     },
 
-    "Ace Editor (Streamlit + Ace Editor + Python)": {
+    "Ace Editor": {
         "url": "https://github.com/SourceBox-LLC/streamlit-ace-editor.git",
         "image": "images/ace_editor_img.PNG",
         "details": "",
-        "stack": ""
+        "stack": "Streamlit, Ace Editor, Python"
     }
 }
 
 
 def convert_to_raw(url):
-
     """
     Convert a GitHub URL to its raw file URL.
     Example:
@@ -83,6 +82,8 @@ def show_template_modal(main_file, main_file_content, other_files):
             "main_file": main_file,
             "main_file_content": main_file_content,
             "other_files": other_files,
+            "details": st.session_state.get("selected_template_details", "No details provided."),
+            "stack": st.session_state.get("selected_template_stack", "No stack information."),
         }
         st.success("Template saved to session!")
         st.rerun()
@@ -213,18 +214,25 @@ def display_templates_component():
     for idx, (template_name, data) in enumerate(template_info.items()):
         url = data["url"]
         image = data["image"]
-    
+        stack_text = data["stack"]  # The stack information
+        details_text = data["details"]  # The details information
+        
         with st.form(key=f"template_form_{idx}"):
             st.markdown(f"### {template_name}")
+            st.caption(stack_text)  # Display stack info in smaller letters
             st.image(image, caption=template_name)
             st.write("This template is perfect for your project. Click below to select it!")
     
-            # The submit button inside the form
             submitted = st.form_submit_button(f"Select {template_name}")
     
             if submitted:
                 st.success(f"You selected the {template_name} template!")
-    
+                # Store image, template name, details, and stack info in session state for the details view.
+                st.session_state["selected_template_image"] = image
+                st.session_state["selected_template_name"] = template_name
+                st.session_state["selected_template_details"] = details_text
+                st.session_state["selected_template_stack"] = stack_text
+                
                 # Process based on the URL type:
                 if url.endswith('.git'):
                     open_repo_template_modal(url)

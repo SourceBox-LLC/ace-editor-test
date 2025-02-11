@@ -3,6 +3,7 @@ from template_factory import display_templates_component, open_generated_templat
 from bedrock import generate_template
 import io
 import zipfile
+import os
 
 # -------------------------------------------------------------------
 # Initialize session state keys if they don't exist yet.
@@ -62,15 +63,25 @@ if st.session_state["selected_template"] is not None:
 
     st.header("Selected Template Details")
     
-    # Display the template image if available; otherwise, show placeholder text.
-    if "selected_template_image" in st.session_state:
-        st.image(
-            st.session_state["selected_template_image"],
-            caption=st.session_state.get("selected_template_name", "Template Image")
-        )
+    # Look for an image stored in session state OR use the image from the template details (if available)
+    template_image = st.session_state.get("selected_template_image", selected_template.get("image"))
+    template_caption = st.session_state.get("selected_template_name", selected_template.get("name", "Template Image"))
+
+    if template_image:
+        # If the image path is not absolute, construct an absolute path based on the current working directory.
+        if not os.path.isabs(template_image):
+            image_path = os.path.join(os.getcwd(), template_image)
+        else:
+            image_path = template_image
+
+        # Optionally, verify if the file exists. If not, display an error message.
+        if os.path.exists(image_path):
+            st.image(image_path, caption=template_caption)
+        else:
+            st.error(f"Image file not found at: {image_path}")
     else:
-        st.write("Insert template image here!")
-        st.write(selected_template)
+        st.write("Template image not found!")
+        
     
     # Display the main file normally.
     st.subheader(f"Main File: {selected_template['main_file']}")
@@ -89,10 +100,10 @@ if st.session_state["selected_template"] is not None:
         st.header(f"{selected_template.get('main_file', 'Template')} Template")
         st.markdown("---")
         st.subheader("Details")
-        st.write("Longer in-depth explanation")
+        st.write(selected_template.get("details", "No details provided."))
         st.markdown("---")
         st.subheader("Stack")
-        st.write("Stack details list here")
+        st.write(selected_template.get("stack", "No stack information."))
         st.markdown("---")
         
         # Create the ZIP archive from the template.
@@ -122,11 +133,32 @@ if st.session_state["selected_template"] is not None:
 
 # -------------------------------------------------------------------
 # Template Selection / Generation UI (shown only if no template is selected)
-st.header("Templates")
-st.subheader("Quickly download templates")
+st.header("Template Lab")
+st.subheader("Quickly Download Templates")
+st.markdown("---")
+st.image("images/app logo.webp", width=350)
 
 with st.sidebar:
-    st.title("To Be Determined")
+    st.title("Template Lab Guide")
+    st.markdown(
+        """
+        **Overview:**
+        This app lets you quickly download, customize, and deploy project templates.
+
+        **Instructions:**
+        1. **Template Selection:** Use the "Select Existing Templates" option to browse available templates.  
+           Click on a template's "Select" button to view its details.
+        2. **Template Generation:** Choose "Generate New Template" to create a custom template by providing a prompt.
+        3. **Template Details:** Once a template is selected, its main file, supplemental files, details, and stack information are displayed.  
+           The preview image of the template (if available) is also shown.
+        4. **Editing:** Click the "Edit Template" button to open the integrated Ace editor.  
+           Make your changes and click "Save" to update the template code.
+        5. **Download:** A ZIP archive of the selected template is available for download.
+        6. **Repository Creation:** The "Create New Repository" link helps you start a new GitHub repository for your project.
+
+        For more information, please refer to the README file or our online documentation.
+        """
+    )
 
 # Define options for the selectbox.
 options = ["None", "Select Existing Templates", "Generate New Template"]
