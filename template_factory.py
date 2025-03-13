@@ -68,16 +68,16 @@ def convert_to_raw(url):
 # -----------------------------------------------------------------------------
 @st.dialog("Template Preview", width="large")
 def show_template_modal(main_file, main_file_content, other_files):
-    st.markdown(f"## Main Template File: `{main_file}`")
+    st.markdown(f"## 📄 Main Template File: `{main_file}`")
     st.code(main_file_content, language="python")
     if other_files:
-        st.markdown("## Other Files")
+        st.markdown("## 📁 Other Files")
         for file_path, content in other_files.items():
-            with st.expander(file_path):
+            with st.expander(f"📝 {file_path}"):
                 st.code(content, language="python")
                 
     # Button to select the template and store its data to session
-    if st.button("Select Template"):
+    if st.button("✅ Select Template", type="primary"):
         st.session_state["selected_template"] = {
             "main_file": main_file,
             "main_file_content": main_file_content,
@@ -85,7 +85,7 @@ def show_template_modal(main_file, main_file_content, other_files):
             "details": st.session_state.get("selected_template_details", "No details provided."),
             "stack": st.session_state.get("selected_template_stack", "No stack information."),
         }
-        st.success("Template saved to session!")
+        st.success("✨ Template saved to session!")
         st.rerun()
 
 def open_repo_template_modal(url):
@@ -178,80 +178,115 @@ def open_repo_template_modal(url):
     # Show the modal dialog with the template details
     show_template_modal(main_file, main_file_content, other_files)
 
+@st.dialog("Generated Template Preview", width="large")
 def open_generated_template_modal():
     """
-    Opens the modal dialog for a generated new template.
-    Expects st.session_state["generated_template"] to contain either:
-     - a dictionary with keys "main_file", "main_file_content", and "other_files", or
-     - a plain string representing a single-file template.
+    Show a modal dialog with the generated template.
     """
-    generated = st.session_state.get("generated_template")
-    if not generated:
-        st.error("No generated template available.")
-        return
+    # Retrieve the generated template from the session_state.
+    generated_template = st.session_state.get("generated_template", {})
     
-    # If generated is a string, assume that it's the main file content and wrap it in a dict.
-    if isinstance(generated, str):
-        generated = {
-            "main_file": "main.py",
-            "main_file_content": generated,
-            "other_files": {}
-        }
-    
-    main_file = generated.get("main_file")
-    main_file_content = generated.get("main_file_content")
-    other_files = generated.get("other_files", {})
-    show_template_modal(main_file, main_file_content, other_files)
+    if isinstance(generated_template, dict):
+        main_file = generated_template.get("main_file", "main.py")
+        main_file_content = generated_template.get("main_file_content", "")
+        other_files = generated_template.get("other_files", {})
+        
+        # Display the main file.
+        st.markdown(f"## 📄 Main Template File: `{main_file}`")
+        st.code(main_file_content, language="python")
+        
+        # Display other files if any.
+        if other_files:
+            st.markdown("## 📁 Other Files")
+            for file_path, content in other_files.items():
+                with st.expander(f"📝 {file_path}"):
+                    st.code(content, language="python")
+        
+        # Button to select the template.
+        if st.button("✅ Select Template", type="primary"):
+            st.session_state["selected_template"] = generated_template
+            st.success("✨ Generated template saved to session!")
+            st.rerun()
+    else:
+        # If it's a string or other type, just display it as is.
+        st.markdown("## Generated Template")
+        st.write(generated_template)
+        
+        # Button to save the template as a string.
+        if st.button("✅ Select Template", type="primary"):
+            st.session_state["selected_template"] = {
+                "main_file": "generated_template.txt",
+                "main_file_content": str(generated_template),
+                "other_files": {},
+            }
+            st.success("✨ Generated template saved to session!")
+            st.rerun()
 
 def display_templates_component():
     """
-    Renders the templates component.
-    Use this function in your app.py to display the templates.
+    Component to display a grid of template cards.
+    Each card shows:
+    - Template name as a header
+    - Image (if available)
+    - A short description
+    - Selection button
     """
-    st.markdown("## Available Templates")
+    # Convert dict to list for easier processing in batches
+    all_templates = list(template_info.items())
     
-    # Create a stacked list; each template is rendered as its own form ("card")
-    for idx, (template_name, data) in enumerate(template_info.items()):
-        url = data["url"]
-        image = data["image"]
-        stack_text = data["stack"]  # The stack information
-        details_text = data["details"]  # The details information
+    # Process templates in rows of 2 (instead of 3)
+    for i in range(0, len(all_templates), 2):
+        # Create a fresh row for each group of 2 templates
+        row = st.columns(2, gap="large")
         
-        with st.form(key=f"template_form_{idx}"):
-            st.markdown(f"### {template_name}")
-            st.caption(stack_text)  # Display stack info in smaller letters
-            st.image(image, caption=template_name)
-            st.write("This template is perfect for your project. Click below to select it!")
-    
-            submitted = st.form_submit_button(f"Select {template_name}")
-    
-            if submitted:
-                st.success(f"You selected the {template_name} template!")
-                # Store image, template name, details, and stack info in session state for the details view.
-                st.session_state["selected_template_image"] = image
-                st.session_state["selected_template_name"] = template_name
-                st.session_state["selected_template_details"] = details_text
-                st.session_state["selected_template_stack"] = stack_text
+        # Process up to 2 templates in this row
+        for j in range(2):
+            col_index = j
+            template_index = i + j
+            
+            # Check if we still have templates to display
+            if template_index < len(all_templates):
+                template_name, info = all_templates[template_index]
                 
-                # Process based on the URL type:
-                if url.endswith('.git'):
-                    open_repo_template_modal(url)
-                else:
-                    raw_url = convert_to_raw(url)
-                    st.write(f"Fetching the template from: {raw_url}")
-                    try:
-                        response = requests.get(raw_url)
-                        response.raise_for_status()
-                        template_content = response.text
-                        st.code(template_content, language="python")
-                    except requests.exceptions.RequestException as e:
-                        st.error(f"Error downloading the template: {e}")
-    
-    # NEW: If a generated new template exists, add a preview button.
-    if st.session_state.get("generated_template"):
-        st.markdown("## Generated New Template")
-        if st.button("Preview Generated Template"):
-            open_generated_template_modal()
+                # Display template in this column
+                with row[col_index]:
+                    # Create a styled card for the template
+                    st.markdown(f"""
+                        <div class="template-card">
+                            <h3 style="margin-top: 0;">{template_name}</h3>
+                        </div>
+                    """, unsafe_allow_html=True)
+                    
+                    # Display the template image if available
+                    if "image" in info and info["image"]:
+                        st.image(info["image"], caption=template_name, use_container_width=True)
+                    
+                    # Display template details
+                    if "details" in info and info["details"]:
+                        st.markdown(f"**Description**: {info['details']}")
+                        
+                    # Display tech stack as badges
+                    if "stack" in info and info["stack"]:
+                        stack_items = info["stack"].split(", ")
+                        badges_html = "<div style='margin: 10px 0;'>"
+                        for item in stack_items:
+                            badges_html += f'<span style="background-color: #FF4B4B; color: white; padding: 4px 8px; border-radius: 4px; margin-right: 5px; font-weight: 500;">{item}</span>'
+                        badges_html += "</div>"
+                        st.markdown(badges_html, unsafe_allow_html=True)
+                    
+                    # Create a select button for the template
+                    if st.button(f"📥 Select {template_name}", key=f"select_{template_name}", use_container_width=True):
+                        # Store necessary information in session_state before opening the modal
+                        st.session_state["selected_template_name"] = template_name
+                        st.session_state["selected_template_image"] = info.get("image", None)
+                        st.session_state["selected_template_details"] = info.get("details", "")
+                        st.session_state["selected_template_stack"] = info.get("stack", "")
+                        
+                        # Call open_repo_template_modal with the template URL
+                        open_repo_template_modal(info["url"])
+        
+        # Add a spacer between rows
+        st.markdown("<div style='height: 40px;'></div>", unsafe_allow_html=True)
 
 # Optional: For testing this module independently
 if __name__ == "__main__":
