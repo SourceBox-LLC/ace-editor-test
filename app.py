@@ -53,11 +53,12 @@ def create_template_zip(template):
 # -------------------------------------------------------------------
 # Function to add rounded borders to images
 def add_image_styling(image_path, caption=None, width=None):
+    # Use a default fixed width if none is provided
+    if width is None:
+        width = "300px"  # Set your desired standard width here
+        
     img_html = f'<img src="data:image/png;base64,{get_base64_of_image(image_path)}" class="template-image"'
-    
-    if width:
-        img_html += f' width="{width}"'
-    
+    img_html += f' width="{width}" style="height: auto; object-fit: contain;"'
     img_html += '>'
     
     if caption:
@@ -214,10 +215,6 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Center the logo
-col1, col2, col3 = st.columns([1, 2, 1])
-with col2:
-    st.image("images/app logo.webp", width=350)
 
 # Add a descriptive section
 st.markdown(
@@ -252,6 +249,7 @@ st.markdown(
 
 # Add sidebar guide content
 with st.sidebar:
+    st.image("images/app-logo.png")
     st.markdown(
         """
         <h2 style="margin-top: 0;">🧭 Guide</h2>

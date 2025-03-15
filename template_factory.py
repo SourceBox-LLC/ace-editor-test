@@ -1,47 +1,50 @@
 import streamlit as st
 import requests
+from PIL import Image
+import io
+import os
 
 # GitHub templates along with their corresponding URLs and images.
 template_info = {
     "Simple Streamlit Authentication": {
         "url": "https://github.com/SourceBox-LLC/simple-streamlit-authentication.git",
         "image": "images/streamlit login template.PNG",
-        "details": "a simple authentication template in Streamlit for logging in, logging out, and registering locally",
+        "details": "A streamlined authentication system for Streamlit apps that includes user registration, login, and session management using local storage for credentials.",
         "stack": "Streamlit, Python"
     },
 
     "AWS Lambda Auth": {
         "url": "https://github.com/SourceBox-LLC/streamlit-login-template.git",
         "image": "images/streamlit login template.PNG",
-        "details": "",
+        "details": "Secure authentication framework for Streamlit applications using AWS Lambda for serverless credential verification and user management in the cloud.",
         "stack": "Streamlit, AWS Lambda, Python"
     },
 
     "Chatbot": {
         "url": "https://github.com/SourceBox-LLC/streamlit-basic-langchain-chatbot.git",
         "image": "images/streamlit chatbot anthropic template.png",
-        "details": "This is a bare bones basic template for a chatbot using Anthropic's claude-3-5-sonnet with Langchain and Streamlit",
+        "details": "Interactive conversational interface powered by Anthropic's Claude 3.5 Sonnet model, featuring message history, customizable prompts, and a responsive UI.",
         "stack": "Streamlit, LangChain, Python"
     },
 
     "RAG Chatbot ()": {
         "url": "https://github.com/SourceBox-LLC/streamlit-basic-RAG-langchain-chatbot.git",
         "image": "images/streamlit rag chatbot template.png",
-        "details": "This is a bare bones basic template for a RAG chatbot using Anthropic's claude-3-5-sonnet with Langchain and Streamlit",
+        "details": "Retrieval-Augmented Generation chatbot that combines document search with AI responses, allowing users to query their own data with Claude 3.5 Sonnet.",
         "stack": "LangChain, Anthropic, Streamlit, Python"
     },
 
     "Image Generator Multi-Modal": {
         "url": "https://github.com/SourceBox-LLC/image-generator-multi-select-template.git",
         "image": "images/image chatbot.png",
-        "details": "an image generation display using Streamlit and Huggingface to host a variety of image generation models",
+        "details": "Versatile image generation interface featuring multiple AI models from Hugging Face, with customizable parameters and a gallery view for comparing outputs.",
         "stack": "Hugging Face, Streamlit, Python"
     },
 
     "Ace Editor": {
         "url": "https://github.com/SourceBox-LLC/streamlit-ace-editor.git",
         "image": "images/ace_editor_img.PNG",
-        "details": "",
+        "details": "Advanced code editing environment with syntax highlighting, multiple themes, and keyboard shortcuts, perfect for creating in-app code editors or IDEs.",
         "stack": "Streamlit, Ace Editor, Python"
     }
 }
@@ -222,6 +225,25 @@ def open_generated_template_modal():
             st.success("✨ Generated template saved to session!")
             st.rerun()
 
+# Add this function to resize images to a standard size
+def resize_image_to_standard(image_path, width=300, height=200):
+    """
+    Resize an image to a standard size using PIL
+    """
+    try:
+        img = Image.open(image_path)
+        img = img.resize((width, height), Image.LANCZOS)
+        
+        # Create a BytesIO object to hold the image data
+        img_byte_arr = io.BytesIO()
+        img.save(img_byte_arr, format=img.format if img.format else 'PNG')
+        img_byte_arr.seek(0)
+        
+        return img_byte_arr
+    except Exception as e:
+        st.error(f"Error resizing image: {e}")
+        return None
+
 def display_templates_component():
     """
     Component to display a grid of template cards.
@@ -259,7 +281,16 @@ def display_templates_component():
                     
                     # Display the template image if available
                     if "image" in info and info["image"]:
-                        st.image(info["image"], caption=template_name, use_container_width=True)
+                        # Resize the image to standard dimensions
+                        image_path = info["image"]
+                        if os.path.exists(image_path):
+                            resized_img = resize_image_to_standard(image_path, width=300, height=200)
+                            if resized_img:
+                                st.image(resized_img, caption=template_name, width=300)
+                            else:
+                                st.image(image_path, caption=template_name, width=300)
+                        else:
+                            st.warning(f"Image not found: {image_path}")
                     
                     # Display template details
                     if "details" in info and info["details"]:
